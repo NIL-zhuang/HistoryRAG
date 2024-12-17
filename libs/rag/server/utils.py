@@ -1,4 +1,4 @@
-from rag.server.specs import ModelConfig
+from rag.server.models.chat_spec import ModelConfig
 from rag.settings import Settings
 
 

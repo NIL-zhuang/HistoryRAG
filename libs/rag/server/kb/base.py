@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from rag.server.specs import Context
+from rag.server.models.kb_spec import Context
 from rag.settings import Settings
 
 

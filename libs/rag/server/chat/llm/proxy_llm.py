@@ -4,7 +4,7 @@ from typing import Dict, List
 
 import openai
 from rag.server.chat.llm.base import LLM
-from rag.server.specs import ModelConfig
+from rag.server.models.chat_spec import ModelConfig
 
 SLEEP_SEC = 3
 

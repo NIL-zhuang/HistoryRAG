@@ -2,7 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, Request
 from rag.server.kb.kb_api import create_kb, drop_kb, list_kbs, search, upload_docs
-from rag.server.specs import BaseResponse, ListResponse
+from rag.server.models.api_spec import BaseResponse, ListResponse
 
 kb_router = APIRouter(prefix="/kb", tags=["Knowledge Base"])
 

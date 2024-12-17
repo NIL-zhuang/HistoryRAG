@@ -1,6 +1,7 @@
 from typing import Dict, List, Union
 
-from rag.server.specs import Context, History
+from rag.server.models.chat_spec import History
+from rag.server.models.kb_spec import Context
 from rag.settings import Settings
 
 

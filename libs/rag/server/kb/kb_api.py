@@ -1,7 +1,8 @@
 from typing import List
 
 from fastapi import Body, File, Form, UploadFile
-from rag.server.specs import BaseResponse, Context, ContextMetadata, ListResponse
+from rag.server.models.api_spec import BaseResponse, ListResponse
+from rag.server.models.kb_spec import Context, ContextMetadata
 from rag.settings import Settings
 
 
