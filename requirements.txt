@@ -1,0 +1,7 @@
+fastapi
+pydantic
+pydantic_settings
+loguru
+torch
+memoization
+openai
