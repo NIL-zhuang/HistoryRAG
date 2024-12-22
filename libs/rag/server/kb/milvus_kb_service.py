@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, MilvusClient
+from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusClient
 from rag.server.kb.base import KBService
 from rag.server.llm.proxy_llm import PlatformLLM
 from rag.server.llm.utils import get_model_configs
@@ -85,7 +85,7 @@ class MilvusKBService(KBService):
         contexts = [Context.model_validate(obj["entity"]) for obj in results]
         return contexts
 
-    def do_init(
+    def create_collection(
         self,
         collection_name: str,
         collection_info: str = "",
@@ -120,7 +120,7 @@ class MilvusKBService(KBService):
     def release_collection(self, collection_name: str):
         self.client.release_collection(collection_name)
 
-    def do_add_context(self, collection_name: str, context: Context):
+    def add_context(self, collection_name: str, context: Context):
         context_data = context.model_dump()
         embedding = self.embed_func(context.content)
         context_data["embedding"] = embedding
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     collection_name = "history_rag"
     kb.client.drop_collection(collection_name=collection_name)
 
-    kb.do_init(collection_name=collection_name)
+    kb.create_collection(collection_name=collection_name)
     for i in range(10):
         context = Context(metadata={}, content=f"test test test content_{i}")
         kb.do_add_context(context=context, collection_name=collection_name)
