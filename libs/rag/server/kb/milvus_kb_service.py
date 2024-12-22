@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, MilvusClient
 from rag.server.kb.base import KBService
@@ -13,11 +13,10 @@ class MilvusKBService(KBService):
 
     def __init__(
         self,
-        kb_name: str,
-        kb_info: str = "",
+        kb_name: str = "default",
+        kb_info: str = None,
         embed_model: str = Settings.model_settings.DEFAULT_EMBEDDING_MODEL,
     ):
-        super().__init__(kb_name, kb_info, embed_model)
         self.client = MilvusClient(
             uri=Settings.kb_settings.MILVUS_HOST,
             token=Settings.kb_settings.MILVUS_TOKEN,
@@ -26,6 +25,9 @@ class MilvusKBService(KBService):
         embedding_model_config: ModelConfig = get_model_configs(embed_model)
         embed_dim = embedding_model_config.meta_data.get("embed_size", 1024)
         self.embed_func = PlatformLLM(embedding_model_config).embed
+        if kb_info is None:
+            kb_info = f"Milvus KB Service, based on {embed_model}, dim {embed_dim}"
+        super().__init__(kb_name, kb_info, embed_model)
         self._DEFAULT_FIELDS = [
             FieldSchema(
                 name="uuid",
@@ -58,32 +60,35 @@ class MilvusKBService(KBService):
             }
         ]
 
-    @staticmethod
-    def get_collection(milvus_name: str):
-        return Collection(milvus_name)
+    def list_collection(self):
+        return self.client.list_collections()
 
     def search(
         self,
         query: str,
+        collection_name: str,
         top_k: int = Settings.kb_settings.VS_TOP_K,
         score_threshold: float = Settings.kb_settings.SCORE_THRESHOLD,
-    ) -> List[Dict]:
-        search_params = {
-            "metric_type": "COSINE",
-        }
+        search_params: Dict[str, Any] = None,
+    ) -> List[Context]:
+        if search_params is None:
+            search_params = {"metric_type": "COSINE"}
         query_embedding = self.embed_func(query)
         results = self.client.search(
-            collection_name=self.kb_name,
+            collection_name=collection_name,
             anns_field="embedding",
             data=[query_embedding],
             search_params=search_params,
             limit=top_k,
             output_fields=["metadata", "content"],
-        )
-        return results
+        )[0]
+        contexts = [Context.model_validate(obj["entity"]) for obj in results]
+        return contexts
 
     def do_init(
         self,
+        collection_name: str,
+        collection_info: str = "",
         fields: List[FieldSchema] = None,
         index_params: List[Dict[str, str]] = None,
     ) -> Dict[str, str]:
@@ -95,44 +100,47 @@ class MilvusKBService(KBService):
         if index_params is None and "embedding" in [field.name for field in fields]:
             index_params = self._DEFAULT_INDEX_PARAMS
         schema = CollectionSchema(
-            fields=fields, description=self.kb_info, enable_dynamic_field=True
+            fields=fields, description=collection_info, enable_dynamic_field=True
         )
         if index_params is not None:
             index_parameters = self.client.prepare_index_params()
             for param in index_params:
                 index_parameters.add_index(**param)
         self.client.create_collection(
-            collection_name=self.kb_name, schema=schema, index_params=index_parameters
+            collection_name=collection_name,
+            schema=schema,
+            index_params=index_parameters,
         )
-        load_state = self.client.get_load_state(self.kb_name)
+        load_state = self.client.get_load_state(collection_name)
         return load_state
 
-    def load_collection(self):
-        self.client.load_collection(self.kb_name)
+    def load_collection(self, collection_name: str):
+        self.client.load_collection(collection_name)
 
-    def release_collection(self):
-        self.client.release_collection(self.kb_name)
+    def release_collection(self, collection_name: str):
+        self.client.release_collection(collection_name)
 
-    def do_add_context(self, context: Context):
+    def do_add_context(self, collection_name: str, context: Context):
         context_data = context.model_dump()
         embedding = self.embed_func(context.content)
         context_data["embedding"] = embedding
-        self.client.insert(collection_name=self.kb_name, data=context_data)
+        self.client.insert(collection_name=collection_name, data=context_data)
+
+    def get_obj_by_uuid(self, collection_name: str, uuid: str):
+        return self.client(collection_name=collection_name, ids=[uuid])
 
 
 if __name__ == "__main__":
-    kb = MilvusKBService("history_rag")
+    kb = MilvusKBService("default")
 
-    from pymilvus import connections
+    collection_name = "history_rag"
+    kb.client.drop_collection(collection_name=collection_name)
 
-    connections.connect(host="localhost", port="19530")
-    Collection(name="history_rag").drop()
-
-    kb.do_init()
+    kb.do_init(collection_name=collection_name)
     for i in range(10):
-        context = Context(meta_data={}, content=f"test test test content_{i}")
-        kb.do_add_context(context)
+        context = Context(metadata={}, content=f"test test test content_{i}")
+        kb.do_add_context(context=context, collection_name=collection_name)
 
-    context = kb.search(query="test 0", top_k=5)
+    context = kb.search(query="test 0", collection_name=collection_name, top_k=5)
     for con in context:
         print(con)

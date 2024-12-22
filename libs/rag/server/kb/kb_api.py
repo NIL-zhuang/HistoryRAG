@@ -91,6 +91,9 @@ def search(
     knowledge_base_name: str = Body(
         "default", description="Knowledge base name", example="default"
     ),
+    collection_name: str = Body(
+        "default", description="Collection name", example="default"
+    ),
     top_k: int = Body(
         Settings.kb_settings.VS_TOP_K, description="Top k retrieved chunks"
     ),
@@ -103,5 +106,5 @@ def search(
         return []
     if query is None or query.strip() == "":
         return []
-    contexts = kb.search(query, top_k, score_threshold)
+    contexts = kb.search(query, collection_name, top_k, score_threshold)
     return contexts
