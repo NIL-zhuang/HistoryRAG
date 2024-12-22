@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import List, Union
 
 from rag.server.models.kb_spec import Context
@@ -9,7 +10,7 @@ class SupportedVectorStoreTypes:
     MILVUS = "milvus"
 
 
-class KBService:
+class KBService(ABC):
     def __init__(
         self,
         kb_name: str,
@@ -41,12 +42,19 @@ class KBService:
     def update_doc(self):
         pass
 
+    def add_context(self, context: Context):
+        self.do_add_context(context)
+
     def search(
         self,
         query: str,
         top_k: int = 10,
         score_threshold: float = 0.3,
     ) -> List[Context]:
+        pass
+
+    @abstractmethod
+    def do_add_context(self, context: Context):
         pass
 
 
@@ -66,3 +74,8 @@ class KBServiceFactory:
             from rag.server.kb.milvus_kb_service import MilvusKBService
 
             return MilvusKBService(kb_name, kb_info, embed_model)
+        return None
+
+    @staticmethod
+    def get_kb_service_by_name(kb_name: str) -> KBService:
+        raise NotImplementedError

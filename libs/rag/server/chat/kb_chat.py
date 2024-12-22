@@ -1,10 +1,10 @@
 from typing import List
 
 from fastapi import Body
-from rag.server.chat.llm.base import LLMFactory
 from rag.server.chat.utils import construct_message
 from rag.server.kb.kb_api import search
-from rag.server.models.chat_spec import History
+from rag.server.llm.base import LLMFactory
+from rag.server.models.model_spec import History
 from rag.settings import Settings
 from rag.utils import build_logger
 

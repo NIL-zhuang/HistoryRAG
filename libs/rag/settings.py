@@ -41,9 +41,9 @@ class PlatformConfig(MyBaseModel):
     PLATFORM_TYPE: Literal["openai"] = "openai"
     API_BASE_URL: str = "https://api.siliconflow.cn/v1"
     API_KEY: str = "sk-xxx"
-    LLM_MODELS: List[str] = []
-    EMBEDDING_MODELS: List[str] = []
-    RERANK_MODELS: List[str] = []
+    LLM_MODELS: Dict[str, Dict[str, Any]] = []
+    EMBEDDING_MODELS: Dict[str, Dict[str, Any]] = []
+    RERANK_MODELS: Dict[str, Dict[str, Any]] = []
 
 
 class ModelSettings(BaseFileSettings):
@@ -61,12 +61,12 @@ class ModelSettings(BaseFileSettings):
                 "PLATFORM_TYPE": "openai",
                 "API_BASE_URL": "https://api.siliconflow.cn/v1",
                 "API_KEY": "sk-xxx",
-                "LLM_MODELS": [
-                    "deepseek-ai/DeepSeek-V2.5",
-                    "Qwen/Qwen-2.5-72B-Instruct",
-                ],
-                "EMBEDDING_MODELS": ["BAAI/bge-m3"],
-                "RERANK_MODELS": ["BAAI/bge-reranker-v3-m3"],
+                "LLM_MODELS": {
+                    "deepseek-ai/DeepSeek-V2.5": {},
+                    "Qwen/Qwen-2.5-72B-Instruct": {},
+                },
+                "EMBEDDING_MODELS": {"BAAI/bge-m3": {"embed_size": 1024}},
+                "RERANK_MODELS": {"BAAI/bge-reranker-v3-m3": {}},
             }
         )
     ]
@@ -74,7 +74,9 @@ class ModelSettings(BaseFileSettings):
 
 class KBSettings(BaseFileSettings):
     model_config = SettingsConfigDict(yaml_file=CONFIG_ROOT / "kb_configs.yaml")
-    DEFAULT_KB_NAME: str = "default"
+    MILVUS_HOST: str = "http://localhost:19530"
+    MILVUS_TOKEN: str = "root:Milvus"
+    COLLECTION_NAME: str = "default"
     DEFAULT_VS_TYPE: Literal["faiss", "milvus"] = "milvus"
     CHUNK_SIZE: int = 1024
     OVERLAP_SIZE: int = 200
