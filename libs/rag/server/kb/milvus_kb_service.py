@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusClient
 from rag.server.kb.base import KBService
@@ -120,26 +120,39 @@ class MilvusKBService(KBService):
     def release_collection(self, collection_name: str):
         self.client.release_collection(collection_name)
 
-    def add_context(self, collection_name: str, context: Context):
-        context_data = context.model_dump()
-        embedding = self.embed_func(context.content)
-        context_data["embedding"] = embedding
+    def drop_collection(self, collection_name):
+        self.client.drop_collection(collection_name)
+
+    def add_context(self, collection_name: str, context: Union[Context, List[Context]]):
+        if isinstance(context, Context):
+            context = [context]
+        context_data = [c.model_dump() for c in context]
+        content = [c["content"] for c in context_data]
+        embedding = self.embed_func(content)
+        for c, embed in zip(context_data, embedding):
+            c["embedding"] = embed
         self.client.insert(collection_name=collection_name, data=context_data)
 
     def get_obj_by_uuid(self, collection_name: str, uuid: str):
         return self.client(collection_name=collection_name, ids=[uuid])
+
+    def do_create_kb(self, kb_name, kb_info, embed_model):
+        pass
+
+    def save_vector_store(self):
+        pass
 
 
 if __name__ == "__main__":
     kb = MilvusKBService("default")
 
     collection_name = "history_rag"
-    kb.client.drop_collection(collection_name=collection_name)
-
+    kb.drop_collection(collection_name=collection_name)
     kb.create_collection(collection_name=collection_name)
-    for i in range(10):
-        context = Context(metadata={}, content=f"test test test content_{i}")
-        kb.do_add_context(context=context, collection_name=collection_name)
+    context = [
+        Context(metadata={}, content=f"test test test content_{i}") for i in range(10)
+    ]
+    kb.add_context(context=context, collection_name=collection_name)
 
     context = kb.search(query="test 0", collection_name=collection_name, top_k=5)
     for con in context:

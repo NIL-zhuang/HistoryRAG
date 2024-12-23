@@ -23,7 +23,7 @@ class PlatformLLM(LLM):
     def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
         return self._call(self._chat, messages=messages, **kwargs)
 
-    def embed(self, content: str, **kwargs) -> List[float]:
+    def embed(self, content: Union[str, List[str]], **kwargs) -> List[float]:
         return self._call(self._embed, content=content, **kwargs)
 
     def _call(self, func: Callable, **kwargs) -> str:
@@ -80,9 +80,14 @@ class PlatformLLM(LLM):
         )
         return response.choices[0].message.content
 
-    def _embed(self, content: str) -> List[float]:
+    def _embed(
+        self, content: Union[str, List[str]]
+    ) -> Union[List[float], List[List[float]]]:
         embedding = self.client.embeddings.create(
             input=content,
             model=self.model_config.model_name,
         )
-        return embedding.data[0].embedding
+        if isinstance(content, str):
+            return embedding.data[0].embedding
+        else:
+            return [d.embedding for d in embedding.data]
