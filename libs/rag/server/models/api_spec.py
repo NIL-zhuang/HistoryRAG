@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 
 from rag.server.pydantic_v2 import BaseModel, Field
 
@@ -6,7 +6,7 @@ from rag.server.pydantic_v2 import BaseModel, Field
 class BaseResponse(BaseModel):
     code: int = Field(200, description="API status code")
     msg: str = Field("success", description="API status message")
-    data: Any = Field(None, description="API data")
+    data: Optional[Any] = Field(None, description="API data")
 
     class Config:
         json_schema_extra = {
@@ -18,7 +18,7 @@ class BaseResponse(BaseModel):
 
 
 class ListResponse(BaseResponse):
-    data: List[Any] = Field(..., description="List of data")
+    data: Optional[List[Any]] = Field(..., description="List of data")
 
     class Config:
         json_schema_extra = {
