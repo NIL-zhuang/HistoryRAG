@@ -17,10 +17,8 @@ async def kb_chat(
         description="Query to chat with knowledge base",
         example="Who is zheyuan lin?",
     ),
-    kb_name: str = Body(
-        "default", description="Knowledge base name", example="default"
-    ),
-    collection_name: str = Body("history_rag", description="Collection name"),
+    kb_name: str = Body(None, description="Knowledge base name", example="default"),
+    collection_name: str = Body(None, description="Collection name"),
     top_k: int = Body(5, description="Nums of matched vectors"),
     score_threshold: float = Body(
         0.1, description="Threshold of matched vectors", ge=0, le=1
@@ -47,7 +45,10 @@ async def kb_chat(
     logger.info(f"User query: {query}")
     try:
         history = [History.from_data(h) for h in history]
-        docs = search(query, kb_name, collection_name, top_k, score_threshold)
+        if kb_name is not None and collection_name is not None:
+            docs = search(query, kb_name, collection_name, top_k, score_threshold)
+        else:
+            docs = []
         prompt_template = Settings.prompt_settings.RAG_PROMPT[prompt_name]
         llm = LLMFactory.get_llm_service(model)
         messages = construct_message(query, history, docs, prompt_template)

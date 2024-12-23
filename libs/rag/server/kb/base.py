@@ -64,7 +64,7 @@ class KBService(ABC):
         """Delete knowledge base"""
 
     @abstractmethod
-    def do_create_kb(self, kb_name, kb_info, embed_model):
+    def do_create_kb(self, kb_name: str, kb_info: str, embed_model: str):
         """Create knowledge base"""
 
     @abstractmethod
@@ -116,6 +116,14 @@ class KBServiceFactory:
     @staticmethod
     def get_kb_service_by_name(kb_name: str) -> KBService:
         # TODO: get kb info from db
-        from rag.server.kb.milvus_kb_service import MilvusKBService
+        # dummy code, will fail on create_kb
+        vector_store_type = "milvus"
+        if isinstance(vector_store_type, str):
+            vector_store_type = getattr(
+                SupportedVectorStoreTypes, vector_store_type.upper()
+            )
+        if vector_store_type == SupportedVectorStoreTypes.MILVUS:
+            from rag.server.kb.milvus_kb_service import MilvusKBService
 
-        return MilvusKBService(kb_name)
+            # dummy code
+            return MilvusKBService(kb_name)
