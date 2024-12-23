@@ -81,7 +81,7 @@ class KBSettings(BaseFileSettings):
     CHUNK_SIZE: int = 1024
     OVERLAP_SIZE: int = 200
     VS_TOP_K: int = 10
-    SCORE_THRESHOLD: float = 0.3
+    SCORE_THRESHOLD: float = 0.0
 
 
 class PromptSettings(BaseFileSettings):
