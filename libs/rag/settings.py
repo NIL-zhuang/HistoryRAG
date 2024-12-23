@@ -76,7 +76,7 @@ class KBSettings(BaseFileSettings):
     model_config = SettingsConfigDict(yaml_file=CONFIG_ROOT / "kb_configs.yaml")
     MILVUS_HOST: str = "http://localhost:19530"
     MILVUS_TOKEN: str = "root:Milvus"
-    COLLECTION_NAME: str = "default"
+    DEFAULT_COLLECTION_NAME: str = "default"
     DEFAULT_VS_TYPE: Literal["faiss", "milvus"] = "milvus"
     CHUNK_SIZE: int = 1024
     OVERLAP_SIZE: int = 200

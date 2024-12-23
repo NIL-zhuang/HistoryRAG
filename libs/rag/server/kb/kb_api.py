@@ -39,7 +39,8 @@ def create_kb(
     if kb_name is None or kb_name.strip() == "":
         return BaseResponse(status="403", message="Knowledge base name is empty")
 
-    kb = KBServiceFactory.get_kb_service_by_name(kb_name)
+    # kb = KBServiceFactory.get_kb_service_by_name(kb_name)
+    kb = None  # TODO: fix this when DB is implemented
     if kb is not None:
         return BaseResponse(code=403, msg="Knowledge base already exists")
 
@@ -47,7 +48,8 @@ def create_kb(
         kb_name, kb_info, vector_store_type, embed_model
     )
     try:
-        kb.create_kb(kb_name, kb_info, embed_model)
+        # TODO: add collection info to db
+        pass
     except Exception as e:
         msg = f"Fail to create knowledge base: {e}"
         logger.error(f"{e.__class__.__name__}: {msg}")
@@ -62,7 +64,11 @@ def drop_kb(kb_name: str = Body(example="default")) -> BaseResponse:
         return BaseResponse(code=404, msg="Knowledge base not found")
 
     try:
-        kb.drop_kb()
+        collections = kb.list_collection()
+        kb_collections = filter_collection_with_kb_name(kb_name, collections)
+        for c in kb_collections:
+            kb.drop_collection(c)
+        # TODO: remove collections from db
     except Exception as e:
         msg = f"Fail to drop knowledge base: {e}"
         logger.error(f"{e.__class__.__name__}: {msg}")
@@ -84,7 +90,10 @@ def create_collection(
         return BaseResponse(code=404, msg="Knowledge base not found")
     try:
         collection_name = map_collection_name(kb_name, collection_name)
+        if collection_name in kb.list_collection():
+            return BaseResponse(code=403, msg="Collection already exists")
         kb.create_collection(collection_name, collection_info)
+        # TODO: add collection to db
     except Exception as e:
         msg = f"Fail to create collection: {e}"
         logger.error(f"{e.__class__.__name__}: {msg}")
@@ -96,13 +105,13 @@ def drop_collection(
     kb_name: str = Body(description="Knowledge base name", example="default"),
     collection_name: str = Body(description="Collection name", example="history_rag"),
 ) -> BaseResponse:
+    # TODO: remove collection from db
     kb = KBServiceFactory.get_kb_service_by_name(kb_name)
     if kb is None:
         return BaseResponse(code=404, msg="Knowledge base not found")
     try:
         collection_name = map_collection_name(kb_name, collection_name)
-        collections = kb.list_collection()
-        if collection_name not in collections:
+        if collection_name not in kb.list_collection():
             return BaseResponse(code=404, msg="Collection not exist")
         kb.drop_collection(collection_name)
     except Exception as e:

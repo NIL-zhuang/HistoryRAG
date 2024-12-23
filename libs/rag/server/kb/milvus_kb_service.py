@@ -141,9 +141,6 @@ class MilvusKBService(KBService):
     def get_obj_by_uuid(self, collection_name: str, uuid: str):
         return self.client(collection_name=collection_name, ids=[uuid])
 
-    def do_create_kb(self, kb_name: str, kb_info: str, embed_model: str):
-        pass
-
     def save_vector_store(self):
         pass
 

@@ -21,19 +21,6 @@ class KBService(ABC):
         self.kb_info = kb_info
         self.embed_model = embed_model
 
-    def create_kb(
-        self,
-        kb_name: str,
-        kb_info: str,
-        embed_model: str = Settings.model_settings.DEFAULT_EMBEDDING_MODEL,
-    ):
-        # TODO: insert kb info to db
-        self.do_create_kb(kb_name, kb_info, embed_model)
-
-    def drop_kb(self, kb_name: str):
-        # TODO: delete kb info from db
-        pass
-
     def add_doc(self):
         # TODO 1. parse document into Context list contexts
         contexts = []
@@ -62,10 +49,6 @@ class KBService(ABC):
     @abstractmethod
     def drop_collection(self, collection_name: str):
         """Delete knowledge base"""
-
-    @abstractmethod
-    def do_create_kb(self, kb_name: str, kb_info: str, embed_model: str):
-        """Create knowledge base"""
 
     @abstractmethod
     def list_collection(self):
@@ -103,6 +86,7 @@ class KBServiceFactory:
         vector_store_type: Union[str, SupportedVectorStoreTypes],
         embed_model: str = Settings.model_settings.DEFAULT_EMBEDDING_MODEL,
     ) -> KBService:
+        # TODO: check from db if kb exists and info match
         if isinstance(vector_store_type, str):
             vector_store_type = getattr(
                 SupportedVectorStoreTypes, vector_store_type.upper()

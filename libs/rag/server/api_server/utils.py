@@ -14,12 +14,16 @@ def map_collection_name(kb_name: str, collection_name: str) -> str:
 
 
 def unmap_collection_name(collection_name: str) -> List[str]:
-    return collection_name.split(SPLIT_TOKEN)
+    res = collection_name.split(SPLIT_TOKEN)
+    if len(res) != 2:
+        raise ValueError(f"Invalid collection_name, should contain {SPLIT_TOKEN}")
+    return res
 
 
 def filter_collection_with_kb_name(kb_name: str, collections: List[str]) -> List[str]:
     if SPLIT_TOKEN in kb_name or len(kb_name) == 0:
         raise ValueError("Invalid kb_name")
+    breakpoint()
     collection_names = []
     for collection_name in collections:
         collection_kb_name, collection_name = unmap_collection_name(collection_name)
