@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from rag.server.pydantic_v2 import BaseModel, Field
 
@@ -23,3 +23,4 @@ class ModelConfig(BaseModel):
     )
     api_key: str = Field("sk-xxx", description="API key")
     model_name: str = Field("deepseek-ai/DeepSeek-V2.5", description="Model name")
+    meta_data: Dict[str, Any] = Field({}, description="Meta data")

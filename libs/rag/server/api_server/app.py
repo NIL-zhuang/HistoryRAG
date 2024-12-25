@@ -23,23 +23,25 @@ def create_app():
     return app
 
 
-def run_api(host, port, **kwargs):
+def run_api(host, port, reload=False, **kwargs):
     if kwargs.get("ssl_keyfile") and kwargs.get("ssl_certfile"):
         uvicorn.run(
             app,
             host=host,
             port=port,
+            reload=reload,
             ssl_keyfile=kwargs.get("ssl_keyfile"),
             ssl_certfile=kwargs.get("ssl_certfile"),
         )
     else:
-        uvicorn.run(app, host=host, port=port)
+        uvicorn.run(app, host=host, port=port, reload=reload)
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int, default=19198)
+    parser.add_argument("--reload", action="store_true")
     args = parser.parse_args()
     return args
 

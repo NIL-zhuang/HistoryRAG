@@ -1,14 +1,18 @@
+from typing import Optional, Union
+
 from rag.server.pydantic_v2 import BaseModel, Field
 
 
 class ContextMetadata(BaseModel):
-    series_name: str = Field(description="Series name")
-    file_name: str = Field(description="File name")
-    title: str = Field(description="Title")
-    start_page: int = Field(description="Content start page")
-    end_page: int = Field(description="Content end page")
+    series_name: Optional[str] = Field(default=None, description="Series name")
+    file_name: Optional[str] = Field(default=None, description="File name")
+    title: Optional[str] = Field(default=None, description="Title")
+    start_page: Optional[int] = Field(default=None, description="Content start page")
+    end_page: Optional[int] = Field(default=None, description="Content end page")
 
 
 class Context(BaseModel):
-    meta_data: ContextMetadata = Field(description="Context metadata")
-    context: str = Field(description="Context content")
+    id: Optional[Union[str, int]] = Field(default=None, description="Context ID")
+    distance: Optional[float] = Field(default=None, description="Similarity Distance")
+    metadata: ContextMetadata = Field(description="Context metadata")
+    content: str = Field(description="Context content")
