@@ -7,3 +7,4 @@ ruamel.yaml>=0.18.0
 openai>=1.57.0
 pymilvus>=1.1.0
 uvicorn
+tqdm
