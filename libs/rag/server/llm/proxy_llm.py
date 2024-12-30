@@ -35,12 +35,11 @@ class PlatformLLM(LLM):
             if err["error"]["code"] == "content_filter":
                 logger.error("Content filter triggered!")
                 return None
-            logger.error(f"The OpenAI API request was invalid: {e}")
+            logger.error(f"API request was invalid: {e}")
             return None
         except openai.APIConnectionError as e:
-            logger.error(f"The OpenAI API connection failed: {e}")
-            sleep(SLEEP_SEC)
-            return func(**kwargs)
+            logger.error(f"API connection failed: {e}")
+            return None
         except openai.RateLimitError as e:
             logger.error(
                 f"Token rate limit exceeded. Retrying after {SLEEP_SEC} second..."
@@ -50,19 +49,15 @@ class PlatformLLM(LLM):
         except openai.APIError as e:
             if "The operation was timeout" in str(e):
                 # Handle the timeout error here
-                logger.error(
-                    "The OpenAI API request timed out. Please try again later."
-                )
-                sleep(SLEEP_SEC)
-                return func(**kwargs)
+                logger.error("API request timed out. Please try again later.")
+                return None
             elif "DeploymentNotFound" in str(e):
                 logger.error("The API deployment for this resource does not exist")
                 return None
             else:
                 # Handle other API errors here
                 logger.error(f"The OpenAI API returned an error: {e}")
-                sleep(SLEEP_SEC)
-                return func(**kwargs)
+                return None
         except Exception as e:
             logger.error(f"An error occurred: {e}")
 
@@ -81,8 +76,12 @@ class PlatformLLM(LLM):
         return response.choices[0].message.content
 
     def _embed(
-        self, content: Union[str, List[str]]
+        self,
+        content: Union[str, List[str]],
+        context_window: int = Settings.model_settings.DEFAULT_EMBEDDING_CONTEXT_WINDOW,
     ) -> Union[List[float], List[List[float]]]:
+        if isinstance(content, List):
+            content = [c[:context_window] for c in content]
         embedding = self.client.embeddings.create(
             input=content,
             model=self.model_config.model_name,
