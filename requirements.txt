@@ -1,7 +1,12 @@
 fastapi
-pydantic
-pydantic_settings
+pydantic==2.10.3
+pydantic_settings==2.7.0
 loguru
-torch
-memoization
-openai
+memoization>=0.4.0
+ruamel.yaml>=0.18.0
+openai>=1.57.0
+pymilvus>=1.1.0
+uvicorn
+tqdm
+gradio==5.1.0
+requests==2.32.3
