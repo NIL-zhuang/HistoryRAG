@@ -44,7 +44,7 @@ async def kb_chat(
     """
     logger.info(f"User query: {query}")
     try:
-        history = [History.from_data(h) for h in history]
+        # history = [History.from_data(h) for h in history]
         if kb_name is not None and collection_name is not None:
             docs = search(query, kb_name, collection_name, top_k, score_threshold)
         else:
