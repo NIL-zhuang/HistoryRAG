@@ -96,23 +96,23 @@ class PromptSettings(BaseFileSettings):
     DEFAULT_SYSTEM_PROMPT: str = "You are a helpful assistant."
 
     RAG_PROMPT : dict = {
-        "pre-generation": lambda context, query, history : [
+        "pre-generation": [
             {
                 "role": "system",
                 "content": (
                     "你是一个知识问答小助手。\n"
                     "根据你对问题的理解，给出你的回答。\n"
                     "<<这些是历史问答记录>>"
-                    f"{history}"
+                    "{history}"
                 )},
             {
                 "role": "user",
                 "content": (
-                    f"{query}"
+                    "{query}"
                 )
             },
         ],
-        "weak-reference": lambda context, query, history : [
+        "weak-reference":  [
             {
                 "role": "system",
                 "content": (
@@ -120,55 +120,57 @@ class PromptSettings(BaseFileSettings):
                     "用户现在提出了一些问题，你的任务是给出你的答复。\n"
                     "为了帮助你更好的回答，我们还为你准备了一些可能有关的资料：\n"
                     "<<已知信息>>\n"
-                    f"{context}\n"
+                    "{contexts}\n"
                     "当你准备给出答复时，如果已知资料中的内容与你的见解存在相似之处，则你可以充分利用这些内容来润色你的回复。当然，这些资料"
                     "中的内容未必准确，因此，如果其中存在与你的见解相悖或无关的内容，还应以你的判断为主。"
                     "<<这些是历史问答记录>>"
-                    f"{history}"
+                    "{history}"
                 )},
             {
                 "role": "user",
                 "content": (
-                    f"{query}\n",
+                    "{query}\n",
                 )
             },
         ],
-        "default": lambda context, query, history : [
+        "default": [
             {
                 "role": "system",
                 "content": (
                     "你是一个文档问答小助手，会参照文档资料中的内容给出问题的答复。\n"
                     "你应该根据提供的参考资料，回答问题。\n"
                     "<<已知信息>>\n"
-                    f"{context}\n"
+                    "{contexts}\n"
                     "你可以根据这些资料的内容来回答问题，可以同时存在一些自己的见解或补充。如果已知资料中的内容与你的见解存在相似之处，"
                     "则你可以将这部分内容与你的观点充分融合；反之如果差异较大，则你可以自行判断孰优孰劣。特别地，如果完全无法从已知资料"
                     "中找到相关的信息，则不太建议你随意编造内容，你可以回答自己并不知晓。\n"
                     "<<这些是历史问答记录>>"
-                    f"{history}"
+                    "{history}"
                 )},
             {
                 "role": "user",
                 "content": (
-                    f"{query}"
+                    "{query}"
                 )
             },
         ],
-        "strong-reference": lambda context, query, history : [
+        "strong-reference": [
             {
                 "role": "system",
                 "content": (
                     "你是一个文档问答小助手，会归纳总结文档资料中的内容，并根据这些内容给出问题的答复。\n"
                     "这里是你所掌握的全部已知信息：\n"
                     "<<已知信息>>\n"
-                    f"{context}\n"
+                    "{contexts}\n"
                     "根据以上资料，回答用户提出的问题。注意：请严格按照资料中给出的信息进行回答，你可以对其中相关的内容进行总结、概括、转述，"
                     "但你回复的所有内容都应当能够从资料中找到相似的内容或出处。如果不能在资料中找到合适的答案，你应该直接表示自己并不知晓。\n"
+                    "<<这些是历史问答记录>>"
+                    "{history}"
                 )},
             {
                 "role": "user",
                 "content": (
-                    f"{query}"
+                    "{query}"
                 )
             },
         ]

@@ -1,9 +1,6 @@
-from symtable import Function
 from typing import Dict, List, Union
-from typing import Callable
 from rag.server.models.kb_spec import Context
 from rag.server.models.model_spec import History
-from rag.settings import Settings
 
 
 
@@ -11,7 +8,10 @@ def construct_message(
     query: str,
     history: List[History],
     contexts: List[Context],
-    prompt_template: Callable[[List[Context], str, List[History]], List[Dict[str, str]]]
+    prompt_template: Union[str, Dict[str, str], List[Dict[str, str]]]
 ) -> List[Dict[str, str]]:
 
-    return prompt_template(contexts, query, history)
+    prompt_template[0]["content"] = prompt_template[0]["content"].format(**locals())
+    prompt_template[1]["content"] = prompt_template[1]["content"].format(**locals())
+
+    return prompt_template

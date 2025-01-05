@@ -1,9 +1,7 @@
 import gradio as gr
 import requests
 
-from rag.web.utils.constants import *
-
-
+from web.utils.constants import *
 
 def chat_with_backend(messages, history):
 
