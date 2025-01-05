@@ -50,6 +50,8 @@ class ModelSettings(BaseFileSettings):
     model_config = SettingsConfigDict(yaml_file=CONFIG_ROOT / "model_configs.yaml")
     DEFAULT_LLM_NAME: str = "deepseek-ai/DeepSeek-V2.5"
     DEFAULT_EMBEDDING_MODEL: str = "BAAI/bge-m3"
+    DEFAULT_EMBEDDING_SIZE: int = 1024
+    DEFAULT_EMBEDDING_CONTEXT_WINDOW: int = 8192
     DEFAULT_RERANK_MODEL: str = "BAAI/bge-reranker-v3-m3"
     HISTORY_LEN: int = 5
     MAX_TOKENS: Optional[int] = 2e5
@@ -65,7 +67,9 @@ class ModelSettings(BaseFileSettings):
                     "deepseek-ai/DeepSeek-V2.5": {},
                     "Qwen/Qwen-2.5-72B-Instruct": {},
                 },
-                "EMBEDDING_MODELS": {"BAAI/bge-m3": {"embed_size": 1024}},
+                "EMBEDDING_MODELS": {
+                    "BAAI/bge-m3": {"embed_size": 1024, "context_window": 8192}
+                },
                 "RERANK_MODELS": {"BAAI/bge-reranker-v3-m3": {}},
             }
         )

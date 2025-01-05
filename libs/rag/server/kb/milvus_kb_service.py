@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Any, Dict, List, Union
 
 from pymilvus import CollectionSchema, DataType, FieldSchema, MilvusClient
@@ -23,8 +24,16 @@ class MilvusKBService(KBService):
         )
 
         embedding_model_config: ModelConfig = get_model_configs(embed_model)
-        embed_dim = embedding_model_config.meta_data.get("embed_size", 1024)
-        self.embed_func = PlatformLLM(embedding_model_config).embed
+        embed_dim = embedding_model_config.meta_data.get(
+            "embed_size", Settings.model_settings.DEFAULT_EMBEDDING_SIZE
+        )
+        self.context_window = embedding_model_config.meta_data.get(
+            "context_window", Settings.model_settings.DEFAULT_EMBEDDING_CONTEXT_WINDOW
+        )
+        self.embed_func = partial(
+            PlatformLLM(embedding_model_config).embed,
+            context_window=self.context_window,
+        )
         if kb_info is None or len(kb_info.strip()) == 0:
             kb_info = f"Milvus KB Service, based on {embed_model}, dim {embed_dim}"
         super().__init__(kb_name, kb_info, embed_model)
@@ -43,7 +52,7 @@ class MilvusKBService(KBService):
                 name="content",
                 dtype=DataType.VARCHAR,
                 is_primary=False,
-                max_length=5120,
+                max_length=65535,
             ),
             FieldSchema(
                 name="embedding",
