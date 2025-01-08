@@ -44,11 +44,11 @@ async def kb_chat(
     """
     logger.info(f"User query: {query}")
     try:
-        history = [History.from_data(h) for h in history]
         if kb_name is not None and collection_name is not None:
             docs = search(query, kb_name, collection_name, top_k, score_threshold)
         else:
             docs = []
+        logger.info(f"Find docs: {docs}")
         prompt_template = Settings.prompt_settings.RAG_PROMPT[prompt_name]
         llm = LLMFactory.get_llm_service(model)
         messages = construct_message(query, history, docs, prompt_template)
