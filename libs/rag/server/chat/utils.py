@@ -16,6 +16,6 @@ def construct_message(
         "contexts": contexts,
     }
 
-    prompt_template[USER_PROMPT_INDEX]["content"] = prompt_template[USER_PROMPT_INDEX]["content"].format(format_context)
+    prompt_template[USER_PROMPT_INDEX]["content"] = prompt_template[USER_PROMPT_INDEX]["content"].format(**format_context)
 
     return prompt_template
