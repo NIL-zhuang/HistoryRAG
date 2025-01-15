@@ -8,6 +8,8 @@ from pydantic_settings import SettingsConfigDict
 from rag import __version__
 from rag.pydantic_settings_file import *
 
+from libs.rag.pydantic_settings_file import BaseFileSettings
+
 RAG_ROOT = Path(os.environ.get("RAG_ROOT", ".")).resolve()
 CONFIG_ROOT = RAG_ROOT / "configs"
 
@@ -109,18 +111,28 @@ class PromptSettings(BaseFileSettings):
     }
 
 
+class DatabaseSettings(BaseFileSettings):
+    db_config: ClassVar[Dict] = SettingsConfigDict(yaml_file=CONFIG_ROOT / "db_configs.yaml")
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 27017
+    DB_PASSWORD: str = ""
+    DB_USERNAME: str = ""
+
+
 class SettingsContainer:
     ROOT_PATH = RAG_ROOT
     basic_settings: BasicSettings = settings_property(BasicSettings())
     model_settings: ModelSettings = settings_property(ModelSettings())
     kb_settings: KBSettings = settings_property(KBSettings())
     prompt_settings: PromptSettings = settings_property(PromptSettings())
+    db_settings: DatabaseSettings = settings_property(DatabaseSettings())
 
     def create_templates(self):
         self.basic_settings.create_template_file(write_file=True)
         self.model_settings.create_template_file(write_file=True)
         self.kb_settings.create_template_file(write_file=True)
         self.prompt_settings.create_template_file(write_file=True)
+        self.db_settings.create_template_file(write_file=True)
 
 
 Settings = SettingsContainer()

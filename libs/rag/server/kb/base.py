@@ -3,6 +3,7 @@ from typing import List, Union
 
 from rag.server.models.kb_spec import Context
 from rag.settings import Settings
+from rag.server.db.kb_repo_impl import MongoDB
 
 
 class SupportedVectorStoreTypes:
@@ -87,6 +88,10 @@ class KBServiceFactory:
         embed_model: str = Settings.model_settings.DEFAULT_EMBEDDING_MODEL,
     ) -> KBService:
         # TODO: check from db if kb exists and info match
+        MongoDB.connect_to_db()
+        query = {"kb_name": kb_name, "kb_info": kb_info}
+        kb_list = MongoDB.find_document("", "", query)
+
         if isinstance(vector_store_type, str):
             vector_store_type = getattr(
                 SupportedVectorStoreTypes, vector_store_type.upper()
@@ -100,6 +105,11 @@ class KBServiceFactory:
     @staticmethod
     def get_kb_service_by_name(kb_name: str) -> KBService:
         # TODO: get kb info from db
+        MongoDB.connect_to_db()
+        # query: 查询条件
+        query = {"kb_name": kb_name}
+        kb_list = MongoDB.find_document("", "", query)
+
         # dummy code, will fail on create_kb
         vector_store_type = "milvus"
         if isinstance(vector_store_type, str):

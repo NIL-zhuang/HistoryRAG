@@ -10,6 +10,7 @@ from rag.server.models.api_spec import BaseResponse, KBRequest, ListResponse
 from rag.server.models.kb_spec import Context
 from rag.settings import Settings
 from rag.utils import build_logger
+from rag.server.db.kb_repo_impl import MongoDB
 
 logger = build_logger()
 
@@ -49,7 +50,9 @@ def create_kb(
     )
     try:
         # TODO: add collection info to db
-        pass
+        MongoDB.connect_to_db()
+        # 需要对list_collection添加 kb_name 之后来记录
+        MongoDB.insert_document("", "", kb.list_collection())
     except Exception as e:
         msg = f"Fail to create knowledge base: {e}"
         logger.error(f"{e.__class__.__name__}: {msg}")
@@ -69,6 +72,9 @@ def drop_kb(kb_name: str = Body(example="default")) -> BaseResponse:
         for c in kb_collections:
             kb.drop_collection(c)
         # TODO: remove collections from db
+        MongoDB.connect_to_db()
+        for collection in kb_collections:
+            MongoDB.delete_documents("", "", {"collection_name": collection})
     except Exception as e:
         msg = f"Fail to drop knowledge base: {e}"
         logger.error(f"{e.__class__.__name__}: {msg}")

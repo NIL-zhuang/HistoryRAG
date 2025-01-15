@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-import uuid
-import json
+from typing import List, Dict, Any, Optional
 
 
 class KBDatabaseInterface(ABC):
@@ -9,8 +8,17 @@ class KBDatabaseInterface(ABC):
 
     """
 
+    @staticmethod
     @abstractmethod
-    def insert_document_with_uuid(self, db_name: str, collection_name: str, document: dict) -> str:
+    def connect_to_db():
+        """
+        静态连接数据库
+        """
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def insert_document_with_uuid(db_name: str, collection_name: str, document: Dict[str, Any]) -> str:
         """
         将单个文档插入指定集合
 
@@ -21,8 +29,22 @@ class KBDatabaseInterface(ABC):
         """
         pass
 
+    @staticmethod
     @abstractmethod
-    def insert_json_data_with_uuid(self, db_name: str, collection_name: str, json_file: str):
+    def insert_document(db_name: str, collection_name: str, documents: List[Dict[str, Any]]) -> int:
+        """
+        将多个数据插入到指定collection
+
+        :param db_name: 数据库名
+        :param collection_name: 集合名
+        :param documents: 多个要插入的数据
+        :return: 插入成功的数量
+        """
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def insert_json_data_with_uuid(db_name: str, collection_name: str, json_file: str):
         """
         读取JSON文件并为每个文档添加UUID，然后将其数据插入到MongoDB中
 
@@ -33,8 +55,9 @@ class KBDatabaseInterface(ABC):
         """
         pass
 
+    @staticmethod
     @abstractmethod
-    def update_document(self, db_name: str, collection_name: str, uuid_str: str, update_fields: dict) -> int:
+    def update_document(db_name: str, collection_name: str, uuid_str: str, update_fields: Dict[str, Any]) -> int:
         """
         更新指定uuid的文档
 
@@ -46,8 +69,9 @@ class KBDatabaseInterface(ABC):
         """
         pass
 
+    @staticmethod
     @abstractmethod
-    def update_documents(self, db_name: str, collection_name: str, query: dict, update_fields: dict) -> int:
+    def update_documents(db_name: str, collection_name: str, query: dict, update_fields: Dict[str, Any]) -> int:
         """
         更新多个文档（根据查询条件）
 
@@ -59,8 +83,9 @@ class KBDatabaseInterface(ABC):
         """
         pass
 
+    @staticmethod
     @abstractmethod
-    def delete_document(self, db_name: str, collection_name: str, uuid_str: str) -> int:
+    def delete_document(db_name: str, collection_name: str, uuid_str: str) -> int:
         """
         删除指定uuid的文档
 
@@ -71,8 +96,22 @@ class KBDatabaseInterface(ABC):
         """
         pass
 
+    @staticmethod
     @abstractmethod
-    def delete_documents(self, db_name: str, collection_name: str, query: dict) -> int:
+    def delete_documents_by_list(db_name: str, collection_name: str, documents: List[Dict[str, Any]]) -> int:
+        """
+        通过具体数据来删除数据 -> 针对kb db之间的数据
+
+        :param db_name: 数据库名
+        :param collection_name: 表名
+        :param documents: 要删除的数据集
+        :return: 删除的记录数量
+        """
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def delete_documents(db_name: str, collection_name: str, query: Dict[str, Any]) -> int:
         """
         删除多个文档（根据查询条件）
 
@@ -83,21 +122,37 @@ class KBDatabaseInterface(ABC):
         """
         pass
 
+    @staticmethod
     @abstractmethod
-    def find_document_by_uuid(self, db_name: str, collection_name: str, uuid_str: str) -> dict:
+    def find_document_by_uuid(db_name: str, collection_name: str, uuid_str: str) -> Dict[str, Any]:
         """
-        查询文档
+        通过uuid查询文档
 
         :param db_name: 数据库名称
         :param collection_name: Mongodb集合名
-        :param query: 要查询的文档
-        :param projection: 筛选条件
+        :param uuid_str: 查找的uuid
         :return: 文档List结果
         """
         pass
 
+    @staticmethod
     @abstractmethod
-    def aggregate_documents(self, db_name: str, collection_name: str, pipeline: list) -> list:
+    def find_document(db_name: str, collection_name: str, query: Dict[str, Any],
+                      projection: Optional[Dict[str, int]] = None) -> List[Dict[str, Any]]:
+        """
+        查询指定条件的内容
+
+        :param db_name: 数据库名
+        :param collection_name: collection名
+        :param query: 查询条件
+        :param projection: 要在返回的文档中包含或排除的字段
+        :return: 要查找的文档
+        """
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def aggregate_documents(db_name: str, collection_name: str, pipeline: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         执行聚合操作
 
@@ -107,95 +162,3 @@ class KBDatabaseInterface(ABC):
         :return: 聚合结果
         """
         pass
-
-
-class MongoDB(KBDatabaseInterface):
-    def __init__(self, db_client):
-        """
-        用MongoDB客户端实例初始化MongoDBInterface
-
-        :param db_client: MongoDB客户端实例
-        """
-        self.db_client = db_client
-
-    def insert_document_with_uuid(self, db_name: str, collection_name: str, document: dict) -> str:
-        # 生成一个新的 UUID
-        document["_id"] = str(uuid.uuid4())
-
-        # 获取数据库和集合
-        db = self.db_client[db_name]
-        collection = db[collection_name]
-
-        # 插入文档
-        result = collection.insert_one(document)
-        return str(result.inserted_id)  # 返回插入的文档ID（UUID）
-
-    def insert_json_data_with_uuid(self, db_name: str, collection_name: str, json_file: str):
-        # 读取JSON文件
-        with open(json_file, "r", encoding="utf-8") as f:
-            data = json.load(f)  # 将文件中的内容解析为Python对象
-
-        # 为每个文档添加UUID
-        for item in data:
-            # 生成一个UUID并作为_id插入
-            item["_id"] = str(uuid.uuid4())  # 将UUID作为_id字段或自定义字段
-
-        db = self.db_client[db_name]
-        collection = db[collection_name]
-
-        # 批量插入数据到MongoDB
-        result = collection.insert_many(data)
-
-        # 获取所有插入文档的UUID
-        inserted_uuids = list(result.inserted_ids)
-
-        return inserted_uuids  # 返回插入文档的UUID列表
-
-    def update_document(self, db_name: str, collection_name: str, uuid_str: str, update_fields: dict) -> int:
-        db = self.db_client[db_name]
-        collection = db[collection_name]
-
-        # 使用 $set 更新字段
-        result = collection.update_one(
-            {"_id": uuid_str}, {"$set": update_fields}  # 查询条件，根据 _id 查找  # 更新操作
-        )
-        return result.modified_count  # 返回修改的文档数量
-
-    def update_documents(self, db_name: str, collection_name: str, query: dict, update_fields: dict) -> int:
-        db = self.db_client[db_name]
-        collection = db[collection_name]
-
-        # 使用 $set 更新多个文档
-        result = collection.update_many(query, {"$set": update_fields})  # 查询条件  # 更新操作
-        return result.modified_count  # 返回修改的文档数量
-
-    def delete_document(self, db_name: str, collection_name: str, uuid_str: str) -> int:
-        db = self.db_client[db_name]
-        collection = db[collection_name]
-
-        # 根据UUID删除文档
-        result = collection.delete_one({"_id": uuid_str})
-        return result.deleted_count  # 返回删除的文档数量
-
-    def delete_documents(self, db_name: str, collection_name: str, query: dict) -> int:
-        db = self.db_client[db_name]
-        collection = db[collection_name]
-
-        # 根据查询条件删除多个文档
-        result = collection.delete_many(query)
-        return result.deleted_count  # 返回删除的文档数量
-
-    def find_document_by_uuid(self, db_name: str, collection_name: str, uuid_str: str) -> dict:
-        db = self.db_client[db_name]
-        collection = db[collection_name]
-
-        result = collection.find_one({"_id": uuid_str})
-        return result  # 返回匹配的文档
-
-    def aggregate_documents(self, db_name: str, collection_name: str, pipeline: list) -> list:
-        db = self.db_client[db_name]
-        collection = db[collection_name]
-
-        # 执行聚合操作
-        result = collection.aggregate(pipeline)
-        return list(result)  # 返回聚合结果的列表
