@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Hashable
 
 from rag.server.pydantic_v2 import BaseModel, Field
 
@@ -11,7 +11,10 @@ class ContextMetadata(BaseModel):
     end_page: Optional[int] = Field(default=None, description="Content end page")
 
 
-class Context(BaseModel):
+class Context(BaseModel, Hashable):
+    def __hash__(self):
+        return hash(self.content)
+
     id: Optional[Union[str, int]] = Field(default=None, description="Context ID")
     distance: Optional[float] = Field(default=None, description="Similarity Distance")
     metadata: ContextMetadata = Field(description="Context metadata")

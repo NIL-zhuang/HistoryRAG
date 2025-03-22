@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from rag.server.kb.kb_api import *
+from rag.server.kb.kb_api import create_collection_for_sparse, full_text_search, add_context_for_sparse
 from rag.server.models.api_spec import BaseResponse, ListResponse
 
 kb_router = APIRouter(prefix="/kb", tags=["Knowledge Base"])
@@ -16,3 +17,7 @@ kb_router.post("/upload_docs", response_model=BaseResponse)(upload_docs)
 kb_router.post("/add_context", response_model=BaseResponse)(add_context)
 
 kb_router.post("/search", response_model=ListResponse)(search)
+
+kb_router.post("/create_collection_for_sparse", response_model=BaseResponse)(create_collection_for_sparse)
+kb_router.post("/add_context_for_sparse", response_model=BaseResponse)(add_context_for_sparse)
+kb_router.post("/full_text_search", response_model=BaseResponse)(full_text_search)

@@ -1,11 +1,12 @@
 from typing import List
 
 from fastapi import Body
-from rag.server.chat.utils import construct_message
+from rag.server.chat.utils import construct_message, rewrite_query
 from rag.server.kb.kb_api import search
 from rag.server.llm.base import LLMFactory
 from rag.server.models.api_spec import BaseResponse
 from rag.server.models.model_spec import History
+from rag.server.retrieve.multi_retrieve import get_docs
 from rag.settings import Settings
 from rag.utils import build_logger
 
@@ -19,6 +20,7 @@ async def kb_chat(
     ),
     kb_name: str = Body(None, description="Knowledge base name", example="default"),
     collection_name: str = Body(None, description="Collection name"),
+    collection_name_for_sparse: str = Body(None, description="Collection name for sparse"),
     top_k: int = Body(5, description="Nums of matched vectors"),
     score_threshold: float = Body(
         0.1, description="Threshold of matched vectors", ge=0, le=1
@@ -44,13 +46,16 @@ async def kb_chat(
     """
     logger.info(f"User query: {query}")
     try:
+        llm = LLMFactory.get_llm_service(model)
+        rewrite_template = Settings.prompt_settings.REWRITE_TEMPLATE
+        optimized_query = rewrite_query(query, llm, rewrite_template)
+        logger.info(f"Optimized query: {optimized_query}")
         if kb_name is not None and collection_name is not None:
-            docs = search(query, kb_name, collection_name, top_k, score_threshold)
+            docs = get_docs(optimized_query, kb_name, collection_name, collection_name_for_sparse, top_k, score_threshold)
         else:
             docs = []
         logger.info(f"Find docs: {docs}")
         prompt_template = Settings.prompt_settings.RAG_PROMPT[prompt_name]
-        llm = LLMFactory.get_llm_service(model)
         messages = construct_message(query, history, docs, prompt_template)
         response = llm.chat(messages, temperature=temperature, max_tokens=max_tokens)
         logger.info(f"Model response: {response}")

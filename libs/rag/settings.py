@@ -54,7 +54,7 @@ class ModelSettings(BaseFileSettings):
     DEFAULT_EMBEDDING_CONTEXT_WINDOW: int = 8192
     DEFAULT_RERANK_MODEL: str = "BAAI/bge-reranker-v3-m3"
     HISTORY_LEN: int = 5
-    MAX_TOKENS: Optional[int] = 2e5
+    MAX_TOKENS: Optional[int] = 4096
     TEMPERATURE: float = 0.3
     MODEL_PLATFORMS: List[PlatformConfig] = [
         PlatformConfig(
@@ -88,16 +88,45 @@ class KBSettings(BaseFileSettings):
     SCORE_THRESHOLD: float = 0.0
 
 
-# 关于prompt_name
-#
-# pre-generation: 不提供文献资料，直接要求模型给出问题的回答。可作为对照组用于测试和评估
-# weak-reference: 模型的回答与文献内容存在较弱的关联性，模型给出的回复会在一定程度上参考文献资料。当给定的文档与问题完全无关时，
-#                 会退化为 pre-generation 模式
-# default: 默认采用此方案，介于 weak-reference 和 strong-reference 之间，模型会充分参照文献内容给出相应的回答
-# strong-reference: 模型将完全按照文献中的内容回答，不产生额外的见解
+'''
+关于prompt_name
+
+pre-generation: 不提供文献资料，直接要求模型给出问题的回答。可作为对照组用于测试和评估
+weak-reference: 模型的回答与文献内容存在较弱的关联性，模型给出的回复会在一定程度上参考文献资料。当给定的文档与问题完全无关时，
+                会退化为 pre-generation 模式
+default: 默认采用此方案，介于 weak-reference 和 strong-reference 之间，模型会充分参照文献内容给出相应的回答
+strong-reference: 模型将完全按照文献中的内容回答，不产生额外的见解
+'''
 class PromptSettings(BaseFileSettings):
     model_config = SettingsConfigDict(yaml_file=CONFIG_ROOT / "prompt_configs.yaml")
     DEFAULT_SYSTEM_PROMPT: str = "You are a helpful assistant."
+    REWRITE_QUERIES_NUM: int = 3
+
+    REWRITE_TEMPLATE: List = [
+        {
+            "role": "system",
+            "content": (
+                """
+                你是一个历史知识问答小助手。你需要对用户的提问进行改写，使句意表述更为清晰明确。\n
+                你必须返回json格式的数据，具体格式如下：\n
+                {"raw_query": "", "optimized_queries": ["query1", "query2", "query3"], "keywords": ["keyword1", "keyword2", "keyword3"]}
+                """
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                """
+                    你需要先剔除与历史知识无关的内容，再从{REWRITE_QUERIES_NUM}个不同的着眼点重写(可以轻微扩展)用户的提问，
+                    并分别生成{REWRITE_QUERIES_NUM}个不同的重写后的query；
+                    此外，你还需要提取原始提问中的关键词，包括具体人名、地名、术语、日期、型号及其它需要进行精确文本匹配的内容。\n
+                    将这些内容和原始查询一起返回。\n
+                    用户的提问: \
+                    {query} \n
+                    将返回的结果放在这里:"""
+            ),
+        },
+    ]
 
     RAG_PROMPT: dict = {
         "pre-generation": [
@@ -147,6 +176,7 @@ class PromptSettings(BaseFileSettings):
                     "你可以根据这些资料的内容来回答问题，可以同时存在一些自己的见解或补充。如果已知资料中的内容与你的见解存在相似之处，"
                     "则你可以将这部分内容与你的观点充分融合；反之如果差异较大，则你可以自行判断孰优孰劣。特别地，如果完全无法从已知资料"
                     "中找到相关的信息，则不太建议你随意编造内容，你可以回答自己并不知晓。\n"
+                    "接下来的回答中，先展示出与问题相关的原文片段（三处以上），再在每个原文出处后进行简要的总结"
                 ),
             },
             {
@@ -168,6 +198,7 @@ class PromptSettings(BaseFileSettings):
                     "你是一个文档问答小助手，会归纳总结文档资料中的内容，并根据这些内容给出问题的答复。\n"
                     "根据提供的资料，回答用户提出的问题。注意：请严格按照资料中给出的信息进行回答，你可以对其中相关的内容进行总结、概括、转述，"
                     "但你回复的所有内容都应当能够从资料中找到相似的内容或出处。如果不能在资料中找到合适的答案，你应该直接表示自己并不知晓。\n"
+                    "进行回答时，给出所参照的相关资料原文片段"
                 ),
             },
             {

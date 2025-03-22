@@ -1,6 +1,8 @@
 from typing import List, Union
 
 from fastapi import Body, File, Form, UploadFile
+from pymilvus import FieldSchema, DataType, Function, FunctionType
+
 from rag.server.api_server.utils import (
     filter_collection_with_kb_name,
     map_collection_name,
@@ -18,11 +20,14 @@ __all__ = [
     "drop_kb",
     "list_kbs",
     "create_collection",
+    "create_collection_for_sparse",
     "drop_collection",
     "list_collection",
     "upload_docs",
     "add_context",
+    "add_context_for_sparse",
     "search",
+    "full_text_search"
 ]
 
 
@@ -100,6 +105,25 @@ def create_collection(
         return BaseResponse(code=500, msg=msg)
     return BaseResponse(code=200, msg="Collection created")
 
+def create_collection_for_sparse(
+    kb_name: str = Body(description="Knowledge base name", example="default"),
+    collection_name: str = Body(description="Collection name", example="history_rag_for_sparse"),
+    collection_info: str = Body("", description="Description to collection"),
+) -> BaseResponse:
+    kb = KBServiceFactory.get_kb_service_by_name(kb_name)
+    if kb is None:
+        return BaseResponse(code=404, msg="Knowledge base not found")
+    try:
+        collection_name = map_collection_name(kb_name, collection_name)
+        if collection_name in kb.list_collection():
+            return BaseResponse(code=403, msg="Collection already exists")
+        kb.create_collection_for_sparse(collection_name, collection_info)
+        # TODO: add collection to db
+    except Exception as e:
+        msg = f"Fail to create collection: {e}"
+        logger.error(f"{e.__class__.__name__}: {msg}")
+        return BaseResponse(code=500, msg=msg)
+    return BaseResponse(code=200, msg="Collection created")
 
 def drop_collection(
     kb_name: str = Body(description="Knowledge base name", example="default"),
@@ -173,6 +197,27 @@ def add_context(
         return BaseResponse(code=500, msg=msg)
     return BaseResponse(code=200, msg="Context uploaded")
 
+def add_context_for_sparse(
+    context: Union[Context, List[Context]] = Body(..., description="Context to upload"),
+    kb_name: str = Body(
+        "default", description="Knowledge base name", example="default"
+    ),
+    collection_name: str = Body(
+        "history_rag", description="Collection name", example="history_rag"
+    ),
+) -> BaseResponse:
+    kb = KBServiceFactory.get_kb_service_by_name(kb_name)
+    if kb is None:
+        return BaseResponse(code=404, msg="Knowledge base not found")
+    try:
+        collection_name = map_collection_name(kb_name, collection_name)
+        kb.add_context_for_sparse(collection_name, context)
+    except Exception as e:
+        msg = f"Fail to upload context: {e}"
+        logger.error(f"{e.__class__.__name__}: {msg}")
+        return BaseResponse(code=500, msg=msg)
+    return BaseResponse(code=200, msg="Context uploaded")
+
 
 def search(
     query: str = Body("", description="User query", example="Who is Zheyuan Lin"),
@@ -199,6 +244,35 @@ def search(
         contexts = kb.search(query, collection_name, top_k, score_threshold)
     except Exception as e:
         msg = f"Fail to search query {query}: {e}"
+        logger.error(f"{e.__class__.__name__}: {msg}")
+        return ListResponse(code=500, msg=msg)
+    return ListResponse(code=200, msg="Search results", data=contexts)
+
+def full_text_search(
+    keywords: List[str] = Body([], description="Keywords"),
+    kb_name: str = Body(
+        "default", description="Knowledge base name", example="default"
+    ),
+    collection_name: str = Body(
+        "default", description="Collection name", example="default"
+    ),
+    top_k: int = Body(
+        Settings.kb_settings.VS_TOP_K, description="Top k retrieved chunks"
+    ),
+    score_threshold: float = Body(
+        Settings.kb_settings.SCORE_THRESHOLD, description="Similarity score threshold"
+    ),
+) -> ListResponse:
+    kb = KBServiceFactory.get_kb_service_by_name(kb_name)
+    if kb is None:
+        return ListResponse(code=404, msg="Knowledge base not found")
+    if len(keywords) == 0:
+        return ListResponse(code=400, msg="Keyword is empty")
+    try:
+        collection_name = map_collection_name(kb_name, collection_name)
+        contexts = kb.full_text_search(keywords, collection_name, top_k, score_threshold)
+    except Exception as e:
+        msg = f"Fail to search query {keywords}: {e}"
         logger.error(f"{e.__class__.__name__}: {msg}")
         return ListResponse(code=500, msg=msg)
     return ListResponse(code=200, msg="Search results", data=contexts)

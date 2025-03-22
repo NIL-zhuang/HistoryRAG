@@ -47,6 +47,15 @@ class KBService(ABC):
         """Create KB collection"""
 
     @abstractmethod
+    def create_collection_for_sparse(
+            self,
+            collection_name: str,
+            collection_info: str = "",
+            **kwargs,
+    ):
+        """Create KB collection for sparse data"""
+
+    @abstractmethod
     def drop_collection(self, collection_name: str):
         """Delete knowledge base"""
 
@@ -76,6 +85,21 @@ class KBService(ABC):
     @abstractmethod
     def save_vector_store(self):
         """dump knowledge base to disk"""
+
+    @abstractmethod
+    def add_context_for_sparse(self, collection_name, context):
+        pass
+
+    @abstractmethod
+    def full_text_search(
+        self,
+        keywords: List[str],
+        collection_name: str,
+        top_k: int = 10,
+        score_threshold: float = 0.3,
+        **kwargs,
+    ) -> List[Context]:
+        pass
 
 
 class KBServiceFactory:

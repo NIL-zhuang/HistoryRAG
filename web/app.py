@@ -10,7 +10,14 @@ def chat_with_backend(messages, history):
 
     url = "http://0.0.0.0:19198/chat/kb_chat"  # 后端接口
     headers = {"Content-Type": "application/json"}
-    payload = {"query": messages, "history": history}
+    payload = {
+        "query": messages,
+        "history": history,
+        "kb_name" : "default",
+        "collection_name": "history_rag",
+        "collection_name_for_sparse" : "history_rag_for_sparse",
+        "top-k": 8
+    }
 
     try:
         response = requests.post(url, json=payload, headers=headers)

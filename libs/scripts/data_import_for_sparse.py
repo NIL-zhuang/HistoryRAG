@@ -32,7 +32,7 @@ def import_data(data: List[Dict], url: str, kb_name: str, collection_name: str):
         "collection_name": collection_name,
         "context": info_list,
     }
-    response = requests.post(f"{url}/kb/add_context", json=payload)
+    response = requests.post(f"{url}/kb/add_context_for_sparse", json=payload)
     return response
 
 
